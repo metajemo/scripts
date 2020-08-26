@@ -1,0 +1,22 @@
+import scrapy
+
+
+class MuziekGebouwSpider(scrapy.Spider):
+    name = 'muziekgebouweindhoven'
+
+    start_urls = ['https://www.muziekgebouweindhoven.nl/nl/zoekresultaat/?zoekwaarde=pannenkoekconcert']
+
+    def parse(self, response):
+        "parsing the list of search results for panenkoekconcert"
+        search_entry_tag = 'div.listItemWrapper'
+        disabled_button_tag = 'div.dateTimeContainer>div.dateTimeInner>button.btn.btn-unavailable'
+        link_tag = 'div.thumb>a::attr("href")'
+        # filter out entries that are not sold out or in the past
+        for entry in response.css(search_entry_tag):
+            if not entry.css(disabled_button_tag).get():
+                yield response.follow(entry.css(link_tag)[0],
+                                      self.parse_panenkoekconcert)
+
+
+    def parse_panenkoekconcert(self, response):
+        print 'response', response.css('button.pricePopoverBtn::attr("data-content")>td.price').get().encode('utf-8')
